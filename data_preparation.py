@@ -29,6 +29,11 @@ for days in FORWARD_RETURN_DAYS:
     df[col_name] = df['Close'].pct_change(periods=-days)
     print(f"  Calculated {col_name}")
 
+# Add close difference column (today's close - tomorrow's close)
+print("Calculating close difference (today - tomorrow)...")
+df['close_diff_next_day'] = df['Close'] - df['Close'].shift(-1)
+print("  Calculated close_diff_next_day")
+
 print(f"\nData shape: {df.shape}")
 print(f"\nFirst few rows:")
 print(df.head())

@@ -1,3 +1,9 @@
 archive
 data
 models
+config.py
+*.env
+.env
+delete
+__pycache__
+*.pyc
