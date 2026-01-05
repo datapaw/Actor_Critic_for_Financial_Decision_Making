@@ -85,7 +85,8 @@ class ModelDrivenToolSelector:
             indices.append(df_clean.index[i])
         
         self.X = np.stack(sequences)
-        self.sequence_indices = pd.DatetimeIndex(indices)
+        # Normalize sequence indices to date-only for reliable comparison with existing results
+        self.sequence_indices = pd.DatetimeIndex(pd.to_datetime(indices)).normalize()
         print(f"Prepared {len(self.X)} sequences")
         return self.X
     
@@ -106,6 +107,36 @@ class ModelDrivenToolSelector:
             print(f"  Class {u}: {c} ({c/len(self.predictions)*100:.1f}%)")
         
         return self.predictions, self.confidence
+    
+    def load_existing_results(self):
+        """
+        Load existing results from output file if it exists
+        
+        OUTPUT:
+            tuple: (existing_results_df, set_of_existing_dates)
+        """
+        if not OUTPUT_PATH.exists():
+            print("\nNo existing results file found. Will process all rows.")
+            return None, set()
+        
+        try:
+            print(f"\nLoading existing results from {OUTPUT_PATH}...")
+            existing_df = pd.read_csv(OUTPUT_PATH)
+            
+            if 'date' in existing_df.columns:
+                # Normalize existing dates to date-only (midnight) to match sequence indices
+                existing_df['date'] = pd.to_datetime(existing_df['date']).dt.normalize()
+                existing_dates = set(existing_df['date'])
+                print(f"Found {len(existing_dates)} unique dates already calculated")
+                return existing_df, existing_dates
+            else:
+                print("Warning: Existing file has no 'date' column. Will reprocess all rows.")
+                return None, set()
+        
+        except Exception as e:
+            print(f"Warning: Could not load existing results: {e}")
+            print("Will process all rows.")
+            return None, set()
     
     def select_tools_by_prediction(self, prediction: int, confidence: float) -> dict:
         """
@@ -212,12 +243,26 @@ class ModelDrivenToolSelector:
         self.prepare_sequences()
         self.make_predictions()
         
+        # Check for existing results
+        existing_results_df, existing_dates = self.load_existing_results()
+        
         # Generate results dataframe
         print("\n" + "="*70)
         print("GENERATING FEATURES AND TOOLS FOR EACH PREDICTION")
         print("="*70)
         
+        if existing_dates:
+            print(f"\nFound {len(existing_dates)} already calculated rows")
+            print(f"Total rows to process: {len(self.predictions)}")
+            dates_to_skip = len([d for d in self.sequence_indices if d in existing_dates])
+            print(f"Skipping {dates_to_skip} already calculated rows")
+            print(f"Processing {len(self.predictions) - dates_to_skip} new rows\n")
+        else:
+            print("\nNo existing results found. Processing all rows.\n")
+        
         results_list = []
+        skipped_count = 0
+        processed_count = 0
         
         # For each prediction, generate appropriate features
         for idx, (date, pred, conf) in enumerate(zip(
@@ -225,8 +270,18 @@ class ModelDrivenToolSelector:
             self.predictions,
             self.confidence
         )):
-            if idx % 50 == 0:
-                print(f"Processing {idx}/{len(self.predictions)}...")
+            # Use normalized date for comparisons (sequence_indices already normalized)
+            date_norm = pd.to_datetime(date).normalize()
+
+            # Skip if already calculated
+            if date_norm in existing_dates:
+                skipped_count += 1
+                continue
+            
+            if processed_count % 50 == 0:
+                print(f"Processing {processed_count}/{len(self.predictions) - len(existing_dates)}... (Skipped: {skipped_count})")
+            
+            processed_count += 1
             
             # Get tool selection
             tool_selection = self.select_tools_by_prediction(pred, conf)
@@ -235,12 +290,17 @@ class ModelDrivenToolSelector:
             features, _ = self.generate_features_for_prediction(self.df, pred, conf)
             
             # Get the feature values at this date
-            if date in features.index:
-                feature_row = features.loc[date]
+            # Feature tables may have datetime indices; normalize before lookup
+            features_index_norm = pd.to_datetime(features.index).normalize()
+            if date_norm in set(features_index_norm):
+                # locate corresponding original index label
+                original_idx = features.index[features_index_norm == date_norm][0]
+                feature_row = features.loc[original_idx]
                 
                 # Create result row
                 result_row = {
-                    'date': date,
+                    # store normalized date (no time) for consistency with existing file
+                    'date': date_norm,
                     'model_prediction_period': pred,
                     'model_confidence': conf,
                     'time_horizon': tool_selection['time_horizon'],
@@ -263,10 +323,25 @@ class ModelDrivenToolSelector:
                 
                 results_list.append(result_row)
         
-        # Create results dataframe
-        results_df = pd.DataFrame(results_list)
+        # Create results dataframe for new calculations
+        new_results_df = pd.DataFrame(results_list)
         
-        print(f"\nGenerated {len(results_df)} complete feature sets")
+        print(f"\nGenerated {len(new_results_df)} new feature sets")
+        print(f"Skipped {skipped_count} already calculated rows")
+        
+        # Merge with existing results if any
+        if existing_results_df is not None and len(existing_results_df) > 0:
+            print(f"Merging with {len(existing_results_df)} existing rows...")
+            results_df = pd.concat([existing_results_df, new_results_df], ignore_index=True)
+            # Ensure date column is datetime and normalized
+            results_df['date'] = pd.to_datetime(results_df['date']).dt.normalize()
+            # Drop any accidental duplicates by date (keep first which is existing)
+            results_df = results_df.drop_duplicates(subset=['date'], keep='first')
+            # Sort by date
+            results_df = results_df.sort_values('date').reset_index(drop=True)
+            print(f"Total rows after merge: {len(results_df)}")
+        else:
+            results_df = new_results_df
         
         return results_df
     
