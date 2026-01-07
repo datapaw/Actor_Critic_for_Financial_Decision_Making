@@ -96,6 +96,15 @@ print("Creating binary columns for each period...")
 for days in FORWARD_RETURN_DAYS:
     df[f'forward_binary_{days}'] = (df['target_period'] == FORWARD_RETURN_DAYS.index(days)).astype(int)
 
+# Replace all -1 values with 0
+print("Replacing invalid target_period values (-1) with 0...")
+invalid_count = (df['target_period'] == -1).sum()
+if invalid_count > 0:
+    print(f"  Found {invalid_count} rows with target_period = -1, replacing with 0")
+    df.loc[df['target_period'] == -1, 'target_period'] = 0
+else:
+    print("  No invalid values found")
+
 print("Multi-class target and binary columns created")
 print(f"\nFinal data shape: {df.shape}")
 print(f"\nColumn names:")
