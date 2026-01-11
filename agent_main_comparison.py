@@ -635,6 +635,115 @@ def print_comparison_summary(comparison_df, timing_results):
 	return summary_stats
 
 
+def analyze_timing_by_period(comparison_df):
+	"""
+	Analyze critic timing decisions broken down by period returns.
+	
+	For each timing decision, calculate returns across all periods.
+	"""
+	timing_analysis = {}
+	timing_names = {0: 'immediate', 1: 'wait_2_days'}
+	period_cols = ['actual_return_10day', 'actual_return_15day', 'actual_return_30day', 'actual_return_60day']
+	period_labels = ['10-day', '15-day', '30-day', '60-day']
+	
+	if 'timing_class' not in comparison_df.columns:
+		return timing_analysis
+	
+	for timing_class in [0, 1]:
+		timing_name = timing_names[timing_class]
+		mask = (comparison_df['timing_class'] == timing_class)
+		
+		if mask.sum() == 0:
+			continue
+		
+		timing_data = comparison_df[mask]
+		confidences = timing_data['timing_confidence'].values
+		
+		period_stats = {}
+		for col, label in zip(period_cols, period_labels):
+			if col in timing_data.columns:
+				rets = timing_data[col].values.astype(float)
+				rets = rets[~np.isnan(rets)]
+				
+				if len(rets) > 0:
+					period_stats[label] = {
+						'count': len(rets),
+						'sum': float(np.sum(rets)),
+						'mean': float(np.mean(rets)),
+						'median': float(np.median(rets)),
+						'std': float(np.std(rets)),
+						'win_rate': float(np.sum(rets > 0) / len(rets) * 100),
+						'best': float(np.max(rets)),
+						'worst': float(np.min(rets))
+					}
+		
+		timing_analysis[timing_name] = {
+			'count': int(mask.sum()),
+			'confidence_mean': float(np.mean(confidences)),
+			'confidence_std': float(np.std(confidences)),
+			'period_stats': period_stats
+		}
+	
+	return timing_analysis
+
+
+def print_timing_by_period(timing_analysis):
+	"""
+	Print timing analysis by period to console.
+	"""
+	print("\n" + "="*100)
+	print("CRITIC TIMING ANALYSIS: Returns by Timing Decision")
+	print("="*100)
+	
+	for timing_name, stats in timing_analysis.items():
+		print(f"\nTiming: {timing_name}")
+		print("-" * 100)
+		print(f"  Samples: {stats['count']}")
+		print(f"  Mean confidence: {stats['confidence_mean']:.4f} (±{stats['confidence_std']:.4f})\n")
+		
+		period_stats = stats.get('period_stats', {})
+		if period_stats:
+			print(f"  {'Period':>8s} | {'Count':>6s} | {'Sum':>12s} | {'Mean':>10s} | {'Median':>10s} | {'Win%':>7s} | {'Best':>10s} | {'Worst':>10s}")
+			print(f"  {'-'*100}")
+			
+			for period in ['10-day', '15-day', '30-day', '60-day']:
+				if period in period_stats:
+					ps = period_stats[period]
+					print(f"  {period:>8s} | {ps['count']:6d} | {ps['sum']:+12.6f} | {ps['mean']:+10.6f} | {ps['median']:+10.6f} | {ps['win_rate']:7.1f} | {ps['best']:+10.6f} | {ps['worst']:+10.6f}")
+
+
+def save_timing_by_period(timing_analysis, output_path='results/timing_by_period_now_or_2.txt'):
+	"""
+	Save timing analysis by period to text file.
+	"""
+	output_path = Path(output_path)
+	output_path.parent.mkdir(parents=True, exist_ok=True)
+	
+	with open(output_path, 'w') as f:
+		f.write("="*100 + "\n")
+		f.write("CRITIC TIMING ANALYSIS: Returns by Timing Decision\n")
+		f.write("="*100 + "\n\n")
+		
+		for timing_name, stats in timing_analysis.items():
+			f.write(f"Timing: {timing_name}\n")
+			f.write("-" * 100 + "\n")
+			f.write(f"  Samples: {stats['count']}\n")
+			f.write(f"  Mean confidence: {stats['confidence_mean']:.4f} (±{stats['confidence_std']:.4f})\n\n")
+			
+			period_stats = stats.get('period_stats', {})
+			if period_stats:
+				f.write(f"  {'Period':>8s} | {'Count':>6s} | {'Sum':>12s} | {'Mean':>10s} | {'Median':>10s} | {'Win%':>7s} | {'Best':>10s} | {'Worst':>10s}\n")
+				f.write(f"  {'-'*100}\n")
+				
+				for period in ['10-day', '15-day', '30-day', '60-day']:
+					if period in period_stats:
+						ps = period_stats[period]
+						f.write(f"  {period:>8s} | {ps['count']:6d} | {ps['sum']:+12.6f} | {ps['mean']:+10.6f} | {ps['median']:+10.6f} | {ps['win_rate']:7.1f} | {ps['best']:+10.6f} | {ps['worst']:+10.6f}\n")
+			f.write("\n")
+	
+	print(f"  ✓ Saved timing analysis to {output_path}")
+
+
 def main():
 	"""
 	Main comparison pipeline:
@@ -765,11 +874,22 @@ def main():
 	comparison_txt = results_dir / 'voting_vs_critic_comparison_report_now_or_2.txt'
 	save_comparison_report(comparison_df, timing_results, summary_stats, output_path=comparison_txt)
 	
+	# Analyze and save timing breakdown by period
+	if timing_results:
+		print("\nSTEP 9: Analyzing timing decisions by period...")
+		timing_analysis = analyze_timing_by_period(comparison_df)
+		if timing_analysis:
+			print_timing_by_period(timing_analysis)
+			timing_txt = results_dir / 'timing_by_period_now_or_2.txt'
+			save_timing_by_period(timing_analysis, output_path=timing_txt)
+	
 	print("\n" + "="*80)
 	print("FILES SAVED:")
 	print("="*80)
 	print(f"  CSV (detailed data):  {comparison_csv}")
 	print(f"  TXT (summary report): {comparison_txt}")
+	if timing_results:
+		print(f"  TXT (timing analysis): {timing_txt}")
 	print("="*80)
 
 

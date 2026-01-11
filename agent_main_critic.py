@@ -612,7 +612,7 @@ def main():
 		model, X_train, y_train, X_val, y_val,
 		epochs=150,
 		batch_size=16,
-		save_path='models/critic_best_now_or_2.keras'
+		save_path='models/critic__now_or_2.keras'
 	)
 	
 	# Evaluate
