@@ -7,3 +7,4 @@ config.py
 delete
 __pycache__
 *.pyc
+critic_data_check.py

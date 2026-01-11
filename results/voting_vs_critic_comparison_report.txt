@@ -1,0 +1,87 @@
+================================================================================
+ENSEMBLE VOTING vs CRITIC vs ACTUAL RETURNS - COMPARISON REPORT
+================================================================================
+
+DATASET INFORMATION
+--------------------------------------------------------------------------------
+Total test samples: 943
+Test period: 0 to 942
+
+================================================================================
+VOTING PREDICTIONS vs ACTUAL RETURNS
+================================================================================
+
+60-day Horizon:
+  Samples: 679
+  Mean return: -0.2490 (-24.90%)
+  Median return: -0.2653 (-26.53%)
+  Std dev: 0.6536
+  Win rate: 23.0%
+  Best: +2.8041 | Worst: -2.2057
+
+30-day Horizon:
+  Samples: 28
+  Mean return: +0.1095 (+10.95%)
+  Median return: +0.2986 (+29.86%)
+  Std dev: 0.8673
+  Win rate: 57.1%
+  Best: +1.7143 | Worst: -1.4002
+
+15-day Horizon:
+  Samples: 135
+  Mean return: +0.3298 (+32.98%)
+  Median return: -0.0114 (-1.14%)
+  Std dev: 1.0839
+  Win rate: 48.9%
+  Best: +2.9447 | Worst: -1.7568
+
+10-day Horizon:
+  Samples: 101
+  Mean return: -0.0240 (-2.40%)
+  Median return: -0.1155 (-11.55%)
+  Std dev: 0.8274
+  Win rate: 44.6%
+  Best: +1.8268 | Worst: -1.9284
+
+================================================================================
+CRITIC TIMING ANALYSIS
+================================================================================
+
+Timing: immediate
+  Samples: 224
+  Mean return: -0.2252 (-22.52%)
+  Median return: -0.2137 (-21.37%)
+  Std dev: 0.4879
+  Win rate: 20.1%
+  Best: +2.7346 | Worst: -1.0420
+
+Timing: wait_2_days
+  Samples: 719
+  Mean return: -0.1021 (-10.21%)
+  Median return: -0.2345 (-23.45%)
+  Std dev: 0.8536
+  Win rate: 33.1%
+  Best: +2.9447 | Worst: -2.2057
+
+Correlation between critic confidence and returns: -0.0566
+
+================================================================================
+WHICH HORIZON WAS ACTUALLY BEST?
+================================================================================
+
+60-day: mean=+0.0005 (+0.05%), win rate=37.3%
+30-day: mean=+0.0588 (+5.88%), win rate=42.3%
+15-day: mean=+0.1018 (+10.18%), win rate=43.7%
+10-day: mean=+0.0803 (+8.03%), win rate=46.3%
+
+================================================================================
+KEY INSIGHTS
+================================================================================
+
+Best voting horizon by mean return: 15-day (+32.98%)
+Best critic timing by mean return: wait_2_days (-10.21%)
+Best actual horizon overall: 15-day (+10.18%)
+
+================================================================================
+END OF REPORT
+================================================================================

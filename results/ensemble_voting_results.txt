@@ -1,0 +1,160 @@
+================================================================================
+ENSEMBLE VOTING RESULTS - TWO-PASS INFERENCE
+================================================================================
+
+PASS 1 RESULTS (Original Features)
+--------------------------------------------------------------------------------
+Test Set Size: 943
+Number of Models: 6
+Input Dimensions: 63
+
+Pass 1 Confidence Metrics:
+  Mean Confidence: 0.8646
+  Std Dev Confidence: 0.1354
+  Mean Entropy: 0.0311
+  Mean Majority %: 98.7%
+  Tie-resolved samples: 0
+  Low-confidence samples: 46
+
+CONFIDENCE CHECK RESULTS
+--------------------------------------------------------------------------------
+Confidence > 0.6? True (actual: 0.8646)
+Entropy < 1.0? True (actual: 0.0311)
+Majority > 50%? True (actual: 98.7%)
+No ties? True (ties: 0)
+Pass 1 is CONFIDENT: True
+Pass 2 Executed: False
+
+================================================================================
+OVERALL CLASSIFICATION METRICS (Final Results)
+================================================================================
+
+Accuracy: 0.7073
+Macro Precision: 0.8694
+Macro Recall: 0.6522
+Macro F1: 0.6638
+
+Weighted Precision: 0.7991
+Weighted Recall: 0.7073
+Weighted F1: 0.6548
+
+Confusion Matrix (rows=true, cols=pred):
+  413, 2, 2, 0
+  192, 26, 3, 0
+  47, 0, 127, 0
+  27, 0, 3, 101
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.61      0.99      0.75       417
+           1       0.93      0.12      0.21       221
+           2       0.94      0.73      0.82       174
+           3       1.00      0.77      0.87       131
+
+    accuracy                           0.71       943
+   macro avg       0.87      0.65      0.66       943
+weighted avg       0.80      0.71      0.65       943
+
+
+================================================================================
+PREDICTION DISTRIBUTION
+================================================================================
+
+  Class 0 (60-day): 679 samples (72.0%)
+  Class 1 (30-day): 28 samples (3.0%)
+  Class 2 (15-day): 135 samples (14.3%)
+  Class 3 (10-day): 101 samples (10.7%)
+
+================================================================================
+PER-SAMPLE DETAILED BREAKDOWN (5 random samples)
+================================================================================
+
+Sample 727:
+  True Label: 2 (15-day)
+  Ensemble Prediction: Class 2 (15-day)
+  Confidence: 0.9491
+  Entropy: 0.0000
+  Majority %: 100.0%
+  Vote Counts: [0, 0, 6, 0]
+  Aggregate Probabilities: [0.0217, 0.0215, 0.9491, 0.0078]
+  Reasoning: majority - Clear majority; margin 0.9274 over class 0.
+  Per-Model Predictions:
+    mlp_wide: Class 2 (conf=0.9323)
+    wide_deep: Class 2 (conf=0.9829)
+    resnet_mlp: Class 2 (conf=0.9852)
+    mlp_small: Class 2 (conf=0.9359)
+    se_mlp: Class 2 (conf=0.9797)
+    stacked_gru_ln: Class 2 (conf=0.8784)
+
+Sample 413:
+  True Label: 0 (60-day)
+  Ensemble Prediction: Class 0 (60-day)
+  Confidence: 0.9781
+  Entropy: 0.0000
+  Majority %: 100.0%
+  Vote Counts: [6, 0, 0, 0]
+  Aggregate Probabilities: [0.9781, 0.0199, 0.0010, 0.0010]
+  Reasoning: majority - Clear majority; margin 0.9582 over class 1.
+  Per-Model Predictions:
+    mlp_wide: Class 0 (conf=0.9837)
+    wide_deep: Class 0 (conf=0.9786)
+    resnet_mlp: Class 0 (conf=0.9934)
+    mlp_small: Class 0 (conf=0.9954)
+    se_mlp: Class 0 (conf=0.9774)
+    stacked_gru_ln: Class 0 (conf=0.9400)
+
+Sample 615:
+  True Label: 1 (30-day)
+  Ensemble Prediction: Class 0 (60-day)
+  Confidence: 0.7540
+  Entropy: 0.0000
+  Majority %: 100.0%
+  Vote Counts: [6, 0, 0, 0]
+  Aggregate Probabilities: [0.7540, 0.1980, 0.0429, 0.0051]
+  Reasoning: majority - Clear majority; margin 0.5559 over class 1.
+  Per-Model Predictions:
+    mlp_wide: Class 0 (conf=0.5290)
+    wide_deep: Class 0 (conf=0.7800)
+    resnet_mlp: Class 0 (conf=0.8664)
+    mlp_small: Class 0 (conf=0.6215)
+    se_mlp: Class 0 (conf=0.8182)
+    stacked_gru_ln: Class 0 (conf=0.9086)
+
+Sample 83:
+  True Label: 3 (10-day)
+  Ensemble Prediction: Class 3 (10-day)
+  Confidence: 0.9911
+  Entropy: 0.0000
+  Majority %: 100.0%
+  Vote Counts: [0, 0, 0, 6]
+  Aggregate Probabilities: [0.0025, 0.0026, 0.0039, 0.9911]
+  Reasoning: majority - Clear majority; margin 0.9872 over class 2.
+  Per-Model Predictions:
+    mlp_wide: Class 3 (conf=1.0000)
+    wide_deep: Class 3 (conf=0.9987)
+    resnet_mlp: Class 3 (conf=0.9751)
+    mlp_small: Class 3 (conf=0.9998)
+    se_mlp: Class 3 (conf=0.9879)
+    stacked_gru_ln: Class 3 (conf=0.9848)
+
+Sample 408:
+  True Label: 1 (30-day)
+  Ensemble Prediction: Class 0 (60-day)
+  Confidence: 0.9782
+  Entropy: 0.0000
+  Majority %: 100.0%
+  Vote Counts: [6, 0, 0, 0]
+  Aggregate Probabilities: [0.9782, 0.0197, 0.0010, 0.0011]
+  Reasoning: majority - Clear majority; margin 0.9585 over class 1.
+  Per-Model Predictions:
+    mlp_wide: Class 0 (conf=0.9810)
+    wide_deep: Class 0 (conf=0.9762)
+    resnet_mlp: Class 0 (conf=0.9927)
+    mlp_small: Class 0 (conf=0.9935)
+    se_mlp: Class 0 (conf=0.9775)
+    stacked_gru_ln: Class 0 (conf=0.9481)
+
+================================================================================
+END OF REPORT
+================================================================================
