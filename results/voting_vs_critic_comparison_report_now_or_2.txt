@@ -54,6 +54,8 @@ VOTING PREDICTIONS vs ACTUAL RETURNS
   Win rate: 44.6%
   Best: +1.8268 | Worst: -1.9284
 
+Correlation between critic confidence and returns: 0.0843
+
 ================================================================================
 WHICH HORIZON WAS ACTUALLY BEST?
 ================================================================================
