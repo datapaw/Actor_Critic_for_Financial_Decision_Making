@@ -1,0 +1,66 @@
+================================================================================
+CRITIC MODEL EVALUATION REPORT
+================================================================================
+
+OVERALL METRICS
+--------------------------------------------------------------------------------
+Test Accuracy: 0.5611
+
+CLASSIFICATION REPORT
+--------------------------------------------------------------------------------
+              precision    recall  f1-score   support
+
+   Immediate       0.50      0.41      0.45       413
+ Wait 2 Days       0.60      0.68      0.64       528
+
+    accuracy                           0.56       941
+   macro avg       0.55      0.54      0.54       941
+weighted avg       0.55      0.56      0.55       941
+
+CONFUSION MATRIX
+--------------------------------------------------------------------------------
+Columns: Predicted | Rows: Actual
+Classes: [Immediate, Wait 2 Days]
+
+[[168 245]
+ [168 360]]
+
+Confusion Matrix (Formatted):
+                  Pred:Immed  Pred:Wait2
+Actual:Immed                168         245
+Actual:Wait2                168         360
+
+PREDICTION DISTRIBUTION
+--------------------------------------------------------------------------------
+Immediate           :    336 ( 35.7%)
+Wait 2 Days         :    605 ( 64.3%)
+
+ACTUAL DISTRIBUTION (Test Set)
+--------------------------------------------------------------------------------
+Immediate           :    413 ( 43.9%)
+Wait 2 Days         :    528 ( 56.1%)
+
+CONFIDENCE ANALYSIS
+--------------------------------------------------------------------------------
+Mean prediction confidence: 0.5709
+
+Per-Class Confidence:
+  Immediate: 0.5654
+  Wait 2 Days: 0.5740
+
+PER-CLASS METRICS (from Confusion Matrix)
+--------------------------------------------------------------------------------
+
+Immediate:
+  TP: 168, FP: 168, FN: 245, TN: 360
+  Precision: 0.5000
+  Recall: 0.4068
+  F1-Score: 0.4486
+
+Wait 2 Days:
+  TP: 360, FP: 245, FN: 168, TN: 168
+  Precision: 0.5950
+  Recall: 0.6818
+  F1-Score: 0.6355
+
+================================================================================

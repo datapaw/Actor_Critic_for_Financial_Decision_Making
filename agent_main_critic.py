@@ -212,6 +212,37 @@ def prepare_critic_features(df):
 	return X, feature_cols
 
 
+def create_sequences(X, y, sequence_length=10):
+	"""
+	Create sequences for LSTM processing.
+	
+	Args:
+		X: Feature array (n_samples, n_features)
+		y: Labels (n_samples,)
+		sequence_length: Number of days to include in each sequence
+	
+	Returns:
+		X_seq: Sequences (n_sequences, sequence_length, n_features)
+		y_seq: Labels for sequences (n_sequences,) - using the last day's label
+		valid_indices: Original indices corresponding to each sequence
+	"""
+	n_samples = len(X)
+	if n_samples < sequence_length:
+		raise ValueError(f"Not enough samples ({n_samples}) for sequence_length={sequence_length}")
+	
+	n_sequences = n_samples - sequence_length + 1
+	X_seq = np.zeros((n_sequences, sequence_length, X.shape[1]), dtype=np.float32)
+	y_seq = np.zeros(n_sequences, dtype=int)
+	valid_indices = np.zeros(n_sequences, dtype=int)
+	
+	for i in range(n_sequences):
+		X_seq[i] = X[i:i+sequence_length]
+		y_seq[i] = y[i+sequence_length-1]  # Use last day's label
+		valid_indices[i] = i + sequence_length - 1
+	
+	return X_seq, y_seq, valid_indices
+
+
 def split_train_val_test(X, y, val_size=0.15, test_size=0.15):
 	"""Split data chronologically for time series."""
 	n = len(X)
@@ -225,19 +256,19 @@ def split_train_val_test(X, y, val_size=0.15, test_size=0.15):
 	return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
 
-def build_critic_model(input_dim, n_classes=2):
+def build_critic_model(input_shape, n_classes=2):
 	"""
-	Build enhanced critic neural network with better architecture.
+	Build LSTM-enhanced critic neural network for sequence processing.
 	
 	Architecture:
-	- Feature processing blocks with residual connections
-	- Batch normalization throughout
-	- Strategic dropout for regularization
-	- Attention-like feature weighting
-	- Deep network to capture complex patterns
+	- LSTM layers to capture temporal patterns across 10-day sequences
+	- Bidirectional LSTM for forward/backward context
+	- Attention mechanism to weight important timesteps
+	- Dense layers for final decision making
+	- Batch normalization and dropout for regularization
 	
 	Args:
-		input_dim: Number of input features (~40)
+		input_shape: Tuple (sequence_length, n_features) e.g., (10, 40)
 		n_classes: Number of timing classes (default 2: immediate, wait2days)
 	
 	Returns:
@@ -245,63 +276,77 @@ def build_critic_model(input_dim, n_classes=2):
 	"""
 	_require_tf()
 	
-	inp = layers.Input(shape=(input_dim,), name='critic_input')
+	inp = layers.Input(shape=input_shape, name='critic_sequence_input')
 	
 	# =====================================================================
-	# BLOCK 1: Initial feature processing
+	# BLOCK 1: Bidirectional LSTM for temporal pattern extraction
 	# =====================================================================
-	x = layers.Dense(256, activation='relu', name='dense1')(inp)
-	x = layers.BatchNormalization(name='bn1')(x)
+	x = layers.Bidirectional(
+		layers.LSTM(128, return_sequences=True, name='lstm1'),
+		name='bi_lstm1'
+	)(inp)
+	x = layers.LayerNormalization(name='ln1')(x)
 	x = layers.Dropout(0.3, name='dropout1')(x)
 	
 	# =====================================================================
-	# BLOCK 2: Feature combination with residual path
+	# BLOCK 2: Second LSTM layer with residual connection
 	# =====================================================================
-	residual = layers.Dense(192, activation='relu', name='residual_1')(inp)
-	x = layers.Dense(192, activation='relu', name='dense2')(x)
-	x = layers.BatchNormalization(name='bn2')(x)
-	x = layers.Add(name='add1')([x, residual])
-	x = layers.Activation('relu', name='relu_after_add1')(x)
+	x = layers.Bidirectional(
+		layers.LSTM(96, return_sequences=True, name='lstm2'),
+		name='bi_lstm2'
+	)(x)
+	x = layers.LayerNormalization(name='ln2')(x)
 	x = layers.Dropout(0.25, name='dropout2')(x)
 	
 	# =====================================================================
-	# BLOCK 3: Technical indicator processing
+	# BLOCK 3: Attention mechanism to weight important timesteps
 	# =====================================================================
-	x = layers.Dense(128, activation='relu', name='dense3')(x)
+	# Compute attention scores
+	attention = layers.Dense(1, activation='tanh', name='attention_tanh')(x)
+	attention = layers.Flatten(name='attention_flatten')(attention)
+	attention = layers.Activation('softmax', name='attention_softmax')(attention)
+	attention = layers.RepeatVector(192, name='attention_repeat')(attention)
+	attention = layers.Permute([2, 1], name='attention_permute')(attention)
+	
+	# Apply attention weights
+	x = layers.Multiply(name='attention_multiply')([x, attention])
+	x = layers.Lambda(lambda x: tf.reduce_sum(x, axis=1), name='attention_sum')(x)
+	
+	# =====================================================================
+	# BLOCK 4: Dense processing of attended features
+	# =====================================================================
+	x = layers.Dense(128, activation='relu', name='dense1')(x)
+	x = layers.BatchNormalization(name='bn1')(x)
+	x = layers.Dropout(0.3, name='dropout3')(x)
+	
+	# =====================================================================
+	# BLOCK 5: Deeper feature extraction with residual
+	# =====================================================================
+	residual = layers.Dense(96, activation='relu', name='residual_1')(x)
+	x = layers.Dense(96, activation='relu', name='dense2')(x)
+	x = layers.BatchNormalization(name='bn2')(x)
+	x = layers.Add(name='add1')([x, residual])
+	x = layers.Activation('relu', name='relu_after_add1')(x)
+	x = layers.Dropout(0.2, name='dropout4')(x)
+	
+	# =====================================================================
+	# BLOCK 6: Final decision layers
+	# =====================================================================
+	x = layers.Dense(64, activation='relu', name='dense3')(x)
 	x = layers.BatchNormalization(name='bn3')(x)
-	x = layers.Dropout(0.2, name='dropout3')(x)
+	x = layers.Dropout(0.15, name='dropout5')(x)
 	
-	# =====================================================================
-	# BLOCK 4: Deeper feature extraction with residual
-	# =====================================================================
-	residual2 = layers.Dense(96, activation='relu', name='residual_2')(x)
-	x = layers.Dense(96, activation='relu', name='dense4')(x)
+	x = layers.Dense(32, activation='relu', name='dense4')(x)
 	x = layers.BatchNormalization(name='bn4')(x)
-	x = layers.Add(name='add2')([x, residual2])
-	x = layers.Activation('relu', name='relu_after_add2')(x)
-	x = layers.Dropout(0.15, name='dropout4')(x)
-	
-	# =====================================================================
-	# BLOCK 5: Pattern recognition
-	# =====================================================================
-	x = layers.Dense(64, activation='relu', name='dense5')(x)
-	x = layers.BatchNormalization(name='bn5')(x)
-	x = layers.Dropout(0.1, name='dropout5')(x)
-	
-	# =====================================================================
-	# BLOCK 6: Decision bottleneck
-	# =====================================================================
-	x = layers.Dense(32, activation='relu', name='dense6')(x)
-	x = layers.BatchNormalization(name='bn6')(x)
 	
 	# =====================================================================
 	# OUTPUT: Timing decision (2 classes: immediate or wait 2 days)
 	# =====================================================================
 	out = layers.Dense(n_classes, activation='softmax', name='timing_output')(x)
 	
-	model = keras.Model(inputs=inp, outputs=out, name='critic_model_enhanced')
+	model = keras.Model(inputs=inp, outputs=out, name='critic_model_lstm')
 	model.compile(
-		optimizer=keras.optimizers.Adam(learning_rate=0.0005),
+		optimizer=keras.optimizers.Adam(learning_rate=0.0003),
 		loss='sparse_categorical_crossentropy',
 		metrics=['accuracy']
 	)
@@ -425,7 +470,7 @@ def evaluate_critic(model, X_test, y_test):
 	}
 
 
-def save_critic_results(df, y_pred, probs, output_path='results/critic_timing_results_now_or_2.csv'):
+def save_critic_results(df, y_pred, probs, output_path='results/critic_timing_results_v2.csv'):
 	"""
 	Save critic predictions to CSV.
 	"""
@@ -449,7 +494,7 @@ def save_critic_results(df, y_pred, probs, output_path='results/critic_timing_re
 	return results_df
 
 
-def save_evaluation_report(results, y_test, output_path='results/critic_evaluation_report_now_or_2.txt'):
+def save_evaluation_report(results, y_test, output_path='results/critic_evaluation_v2.txt'):
 	"""
 	Save detailed evaluation metrics and confusion matrix to text file.
 	
@@ -558,6 +603,89 @@ def save_evaluation_report(results, y_test, output_path='results/critic_evaluati
 	print(f"\nEvaluation report saved to: {output_path}")
 
 
+def analyze_critic_recommendations(y_pred, y_test, probs, output_path='results/critic_recommendation_summary.csv'):
+	"""
+	Analyze and save critic recommendation summary to CSV.
+	
+	Determines whether critic recommends immediate entry or waiting,
+	and compares with optimal timing based on actual returns.
+	"""
+	output_path = Path(output_path)
+	output_path.parent.mkdir(parents=True, exist_ok=True)
+	
+	# Count predictions
+	immediate_count = int(np.sum(y_pred == 0))
+	wait2_count = int(np.sum(y_pred == 1))
+	total = len(y_pred)
+	
+	# Count optimal (actual)
+	immediate_optimal = int(np.sum(y_test == 0))
+	wait2_optimal = int(np.sum(y_test == 1))
+	
+	# Determine recommendation
+	if immediate_count > wait2_count:
+		recommendation = "Enter IMMEDIATELY"
+		recommendation_pct = immediate_count / total * 100
+	elif wait2_count > immediate_count:
+		recommendation = "WAIT 2 DAYS"
+		recommendation_pct = wait2_count / total * 100
+	else:
+		recommendation = "BALANCED (50-50)"
+		recommendation_pct = 50.0
+	
+	# Determine optimal strategy
+	if immediate_optimal > wait2_optimal:
+		optimal_strategy = "Immediate entry"
+		optimal_pct = immediate_optimal / len(y_test) * 100
+	elif wait2_optimal > immediate_optimal:
+		optimal_strategy = "Wait 2 days"
+		optimal_pct = wait2_optimal / len(y_test) * 100
+	else:
+		optimal_strategy = "Both equal"
+		optimal_pct = 50.0
+	
+	# Confidence stats
+	mean_conf = float(np.max(probs, axis=1).mean())
+	immediate_conf = float(np.max(probs[y_pred == 0], axis=1).mean()) if immediate_count > 0 else 0.0
+	wait2_conf = float(np.max(probs[y_pred == 1], axis=1).mean()) if wait2_count > 0 else 0.0
+	
+	# Create summary dataframe
+	summary_data = [
+		{"Metric": "Critic Recommendation", "Value": recommendation, "Percentage": f"{recommendation_pct:.1f}%"},
+		{"Metric": "Immediate Predictions", "Value": immediate_count, "Percentage": f"{immediate_count/total*100:.1f}%"},
+		{"Metric": "Wait 2 Days Predictions", "Value": wait2_count, "Percentage": f"{wait2_count/total*100:.1f}%"},
+		{"Metric": "Total Test Samples", "Value": total, "Percentage": "100.0%"},
+		{"Metric": "", "Value": "", "Percentage": ""},
+		{"Metric": "Optimal Strategy (Actual)", "Value": optimal_strategy, "Percentage": f"{optimal_pct:.1f}%"},
+		{"Metric": "Optimal: Immediate", "Value": immediate_optimal, "Percentage": f"{immediate_optimal/len(y_test)*100:.1f}%"},
+		{"Metric": "Optimal: Wait 2 Days", "Value": wait2_optimal, "Percentage": f"{wait2_optimal/len(y_test)*100:.1f}%"},
+		{"Metric": "", "Value": "", "Percentage": ""},
+		{"Metric": "Mean Confidence", "Value": f"{mean_conf:.4f}", "Percentage": ""},
+		{"Metric": "Immediate Confidence", "Value": f"{immediate_conf:.4f}", "Percentage": ""},
+		{"Metric": "Wait 2 Days Confidence", "Value": f"{wait2_conf:.4f}", "Percentage": ""},
+	]
+	
+	summary_df = pd.DataFrame(summary_data)
+	summary_df.to_csv(output_path, index=False)
+	
+	# Print summary
+	print("\n" + "="*80)
+	print("CRITIC RECOMMENDATION SUMMARY")
+	print("="*80)
+	print(f"\nRECOMMENDATION: {recommendation}")
+	print(f"  Confidence in recommendation: {recommendation_pct:.1f}%")
+	print(f"\nPrediction Breakdown:")
+	print(f"  Immediate: {immediate_count} samples ({immediate_count/total*100:.1f}%)")
+	print(f"  Wait 2 days: {wait2_count} samples ({wait2_count/total*100:.1f}%)")
+	print(f"\nOptimal Strategy (based on actual returns):")
+	print(f"  {optimal_strategy} ({optimal_pct:.1f}% of cases)")
+	print(f"\nMean prediction confidence: {mean_conf:.4f}")
+	print("="*80)
+	print(f"\nRecommendation summary saved to: {output_path}")
+	
+	return summary_df
+
+
 def main():
 	"""
 	Main execution:
@@ -590,21 +718,27 @@ def main():
 	print(f"Number of features: {len(feature_cols)}")
 	print(f"Sample features: {feature_cols[:10]}")
 	
-	# Split data
-	print("\nSplitting data...")
-	(X_train, y_train), (X_val, y_val), (X_test, y_test) = split_train_val_test(X, y)
-	print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
-	
-	# Normalize features
+	# Normalize features BEFORE creating sequences
 	print("\nNormalizing features...")
 	scaler = StandardScaler()
-	X_train = scaler.fit_transform(X_train)
-	X_val = scaler.transform(X_val)
-	X_test = scaler.transform(X_test)
+	X_scaled = scaler.fit_transform(X)
 	
-	# Build model
-	print("\nBuilding critic model...")
-	model = build_critic_model(input_dim=X_train.shape[1], n_classes=2)
+	# Create sequences for LSTM (10-day windows)
+	print("\nCreating sequences (10-day windows)...")
+	sequence_length = 10
+	X_seq, y_seq, valid_indices = create_sequences(X_scaled, y, sequence_length=sequence_length)
+	print(f"Sequences created: {len(X_seq)} sequences of shape {X_seq.shape}")
+	print(f"Each sequence contains {sequence_length} days of {X_seq.shape[2]} features")
+	
+	# Split data
+	print("\nSplitting data...")
+	(X_train, y_train), (X_val, y_val), (X_test, y_test) = split_train_val_test(X_seq, y_seq)
+	print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
+	
+	# Build model with sequence input shape
+	print("\nBuilding LSTM critic model...")
+	input_shape = (sequence_length, X.shape[1])  # (10, n_features)
+	model = build_critic_model(input_shape=input_shape, n_classes=2)
 	print(model.summary())
 	
 	# Train model
@@ -612,33 +746,69 @@ def main():
 		model, X_train, y_train, X_val, y_val,
 		epochs=150,
 		batch_size=16,
-		save_path='models/critic__now_or_2.keras'
+		save_path='models/critic_lstm_now_or_2.keras'
 	)
 	
 	# Evaluate
 	results = evaluate_critic(model, X_test, y_test)
 	
 	# Save evaluation report
-	save_evaluation_report(results, y_test, output_path='results/critic_evaluation_report_now_or_2.txt')
+	save_evaluation_report(results, y_test, output_path='results/critic_evaluation_v2.txt')
+	
+	# Analyze and save recommendations
+	analyze_critic_recommendations(results['predictions'], y_test, results['probabilities'],
+	                                output_path='results/critic_recommendation_summary.csv')
 	
 	# Save predictions on full dataset
 	print("\nGenerating predictions on full dataset...")
-	X_full = scaler.transform(X)
-	probs_full = model.predict(X_full, verbose=0)
-	y_pred_full = np.argmax(probs_full, axis=1)
+	probs_seq = model.predict(X_seq, verbose=0)
+	y_pred_seq = np.argmax(probs_seq, axis=1)
+	
+	# Map predictions back to original indices
+	# For samples not in sequences, use neutral prediction or copy from nearest
+	probs_full = np.zeros((len(df), 2), dtype=np.float32)
+	y_pred_full = np.zeros(len(df), dtype=int)
+	
+	# Fill in predictions for samples that have sequences
+	for i, orig_idx in enumerate(valid_indices):
+		probs_full[orig_idx] = probs_seq[i]
+		y_pred_full[orig_idx] = y_pred_seq[i]
+	
+	# For first sequence_length-1 samples, copy from first available prediction
+	for i in range(sequence_length - 1):
+		probs_full[i] = probs_seq[0]
+		y_pred_full[i] = y_pred_seq[0]
+	
+	print(f"Predictions generated for {len(df)} samples (using 10-day sequence averaging)")
 	
 	results_df = save_critic_results(
 		df, y_pred_full, probs_full,
-		output_path='results/critic_timing_results_now_or_2.csv'
+		output_path='results/critic_timing_results_lstm_v2.csv'
 	)
 	
+	# Overall recommendation for full dataset
+	immediate_total = int(np.sum(y_pred_full == 0))
+	wait2_total = int(np.sum(y_pred_full == 1))
+	full_summary_data = [
+		{"Metric": "Overall Recommendation", "Value": "Enter IMMEDIATELY" if immediate_total > wait2_total else ("WAIT 2 DAYS" if wait2_total > immediate_total else "BALANCED"), "Count": ""},
+		{"Metric": "Immediate Predictions", "Value": immediate_total, "Count": f"{immediate_total/len(y_pred_full)*100:.1f}%"},
+		{"Metric": "Wait 2 Days Predictions", "Value": wait2_total, "Count": f"{wait2_total/len(y_pred_full)*100:.1f}%"},
+		{"Metric": "Total Samples", "Value": len(y_pred_full), "Count": "100.0%"},
+	]
+	full_summary_df = pd.DataFrame(full_summary_data)
+	full_summary_path = Path(__file__).resolve().parent / 'results' / 'critic_overall_recommendation.csv'
+	full_summary_df.to_csv(full_summary_path, index=False)
+	print(f"\nOverall recommendation saved to: {full_summary_path}")
+	
 	print("\n" + "="*80)
-	print("CRITIC TRAINING COMPLETE")
+	print("CRITIC TRAINING COMPLETE (LSTM with 10-day sequences)")
 	print("="*80)
 	print(f"Test Accuracy: {results['accuracy']:.4f}")
-	print(f"Model saved: models/critic_best_now_or_2.keras")
-	print(f"Results saved: results/critic_timing_results_now_or_2.csv")
-	print(f"Report saved: results/critic_evaluation_report_now_or_2.txt")
+	print(f"Model saved: models/critic_lstm_v2.keras")
+	print(f"Results saved: results/critic_timing_results_lstm_v2.csv")
+	print(f"Report saved: results/critic_evaluation_report_lstm_v2.txt")
+	print(f"Sequence length: {sequence_length} days")
+	print(f"Total sequences processed: {len(X_seq)}")
 
 
 if __name__ == '__main__':

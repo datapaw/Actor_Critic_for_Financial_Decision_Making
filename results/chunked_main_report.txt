@@ -1,0 +1,185 @@
+Chunked model inference report
+============================================================
+Models used: ['mlp_wide', 'wide_deep', 'resnet_mlp', 'mlp_small', 'se_mlp', 'stacked_gru_ln']
+Samples: 6282
+Input dim: 63
+Ensemble predicted classes: [0, 1, 2, 3]
+Ensemble confidence mean: 0.7467
+Ensemble confidence min: 0.2865
+Ensemble confidence max: 0.9986
+
+Ensemble prediction distribution (overall voting)
+------------------------------------------------------------
+Class 0: 3931 ( 62.6%)
+Class 1: 413 (  6.6%)
+Class 2: 917 ( 14.6%)
+Class 3: 1021 ( 16.3%)
+
+Actual label distribution
+------------------------------------------------------------
+Class 0: 2370 ( 37.7%)
+Class 1: 1323 ( 21.1%)
+Class 2: 1191 ( 19.0%)
+Class 3: 1398 ( 22.3%)
+
+=== Metrics: Ensemble (probability-averaged) ===
+Accuracy: 0.7157
+Confusion matrix:
+[[2305   52   10    3]
+ [ 984  317   21    1]
+ [ 303   19  863    6]
+ [ 339   25   23 1011]]
+Classification report:
+              precision    recall  f1-score   support
+
+           0     0.5864    0.9726    0.7316      2370
+           1     0.7676    0.2396    0.3652      1323
+           2     0.9411    0.7246    0.8188      1191
+           3     0.9902    0.7232    0.8359      1398
+
+    accuracy                         0.7157      6282
+   macro avg     0.8213    0.6650    0.6879      6282
+weighted avg     0.7817    0.7157    0.6942      6282
+
+
+=== Metrics: Ensemble (majority vote with prob tie-break) ===
+Accuracy: 0.7160
+Confusion matrix:
+[[2308   49   10    3]
+ [ 985  316   21    1]
+ [ 305   17  863    6]
+ [ 343   21   23 1011]]
+Classification report:
+              precision    recall  f1-score   support
+
+           0     0.5856    0.9738    0.7314      2370
+           1     0.7841    0.2389    0.3662      1323
+           2     0.9411    0.7246    0.8188      1191
+           3     0.9902    0.7232    0.8359      1398
+
+    accuracy                         0.7160      6282
+   macro avg     0.8253    0.6651    0.6881      6282
+weighted avg     0.7849    0.7160    0.6943      6282
+
+
+=== Metrics: Per-model ===
+Model: mlp_wide
+  Accuracy: 0.7197
+  Confusion matrix:
+[[2128  168   56   18]
+ [ 797  467   46   13]
+ [ 244   52  880   15]
+ [ 236   87   29 1046]]
+  Classification report:
+              precision    recall  f1-score   support
+
+           0     0.6250    0.8979    0.7370      2370
+           1     0.6034    0.3530    0.4454      1323
+           2     0.8704    0.7389    0.7993      1191
+           3     0.9579    0.7482    0.8402      1398
+
+    accuracy                         0.7197      6282
+   macro avg     0.7642    0.6845    0.7055      6282
+weighted avg     0.7410    0.7197    0.7103      6282
+
+------------------------------------------------------------
+Model: wide_deep
+  Accuracy: 0.7186
+  Confusion matrix:
+[[2284   73   10    3]
+ [ 941  360   21    1]
+ [ 303   22  861    5]
+ [ 333   33   23 1009]]
+  Classification report:
+              precision    recall  f1-score   support
+
+           0     0.5916    0.9637    0.7331      2370
+           1     0.7377    0.2721    0.3976      1323
+           2     0.9410    0.7229    0.8177      1191
+           3     0.9912    0.7217    0.8353      1398
+
+    accuracy                         0.7186      6282
+   macro avg     0.8154    0.6701    0.6959      6282
+weighted avg     0.7775    0.7186    0.7012      6282
+
+------------------------------------------------------------
+Model: resnet_mlp
+  Accuracy: 0.7197
+  Confusion matrix:
+[[2066  291   10    3]
+ [ 724  576   21    2]
+ [ 218  100  866    7]
+ [ 223  138   24 1013]]
+  Classification report:
+              precision    recall  f1-score   support
+
+           0     0.6394    0.8717    0.7377      2370
+           1     0.5213    0.4354    0.4745      1323
+           2     0.9403    0.7271    0.8201      1191
+           3     0.9883    0.7246    0.8362      1398
+
+    accuracy                         0.7197      6282
+   macro avg     0.7723    0.6897    0.7171      6282
+weighted avg     0.7492    0.7197    0.7198      6282
+
+------------------------------------------------------------
+Model: mlp_small
+  Accuracy: 0.7125
+  Confusion matrix:
+[[2325   32   10    3]
+ [1018  282   21    2]
+ [ 323    2  861    5]
+ [ 365    2   23 1008]]
+  Classification report:
+              precision    recall  f1-score   support
+
+           0     0.5768    0.9810    0.7264      2370
+           1     0.8868    0.2132    0.3437      1323
+           2     0.9410    0.7229    0.8177      1191
+           3     0.9902    0.7210    0.8344      1398
+
+    accuracy                         0.7125      6282
+   macro avg     0.8487    0.6595    0.6806      6282
+weighted avg     0.8031    0.7125    0.6872      6282
+
+------------------------------------------------------------
+Model: se_mlp
+  Accuracy: 0.7281
+  Confusion matrix:
+[[2217  115   10   28]
+ [ 871  412   21   19]
+ [ 248   55  866   22]
+ [ 243   53   23 1079]]
+  Classification report:
+              precision    recall  f1-score   support
+
+           0     0.6194    0.9354    0.7453      2370
+           1     0.6488    0.3114    0.4208      1323
+           2     0.9413    0.7271    0.8205      1191
+           3     0.9399    0.7718    0.8476      1398
+
+    accuracy                         0.7281      6282
+   macro avg     0.7874    0.6864    0.7086      6282
+weighted avg     0.7580    0.7281    0.7140      6282
+
+------------------------------------------------------------
+Model: stacked_gru_ln
+  Accuracy: 0.7109
+  Confusion matrix:
+[[2317   39   10    4]
+ [1017  280   21    5]
+ [ 321    3  859    8]
+ [ 360    5   23 1010]]
+  Classification report:
+              precision    recall  f1-score   support
+
+           0     0.5771    0.9776    0.7258      2370
+           1     0.8563    0.2116    0.3394      1323
+           2     0.9409    0.7212    0.8165      1191
+           3     0.9834    0.7225    0.8330      1398
+
+    accuracy                         0.7109      6282
+   macro avg     0.8394    0.6582    0.6787      6282
+weighted avg     0.7953    0.7109    0.6855      6282
+
+------------------------------------------------------------

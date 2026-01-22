@@ -161,7 +161,7 @@ def load_critic_model(models_dir: str | Path = None):
 	_require_tf()
 	repo_root = Path(__file__).resolve().parent
 	models_dir = Path(models_dir) if models_dir else (repo_root / 'models')
-	critic_path = models_dir / 'critic_best.keras'
+	critic_path = models_dir / 'critic__now_or_2_v2.keras'
 	
 	if not critic_path.exists():
 		print(f"Warning: critic model not found at {critic_path}")
@@ -420,7 +420,7 @@ def generate_summary_statistics(comparison_df, timing_results):
 	return summary
 
 
-def save_comparison_report(comparison_df, timing_results, summary_stats, output_path='results/voting_critic_comparison_report_now_or_2.txt'):
+def save_comparison_report(comparison_df, timing_results, summary_stats, output_path='results/critic_new_results_report.txt'):
 	"""
 	Save detailed comparison report to text file.
 	"""
@@ -712,7 +712,7 @@ def print_timing_by_period(timing_analysis):
 					print(f"  {period:>8s} | {ps['count']:6d} | {ps['sum']:+12.6f} | {ps['mean']:+10.6f} | {ps['median']:+10.6f} | {ps['win_rate']:7.1f} | {ps['best']:+10.6f} | {ps['worst']:+10.6f}")
 
 
-def save_timing_by_period(timing_analysis, output_path='results/timing_by_period_now_or_2.txt'):
+def save_timing_by_period(timing_analysis, output_path='results/critic_new_results_timing.txt'):
 	"""
 	Save timing analysis by period to text file.
 	"""
@@ -859,7 +859,7 @@ def main():
 	results_dir.mkdir(parents=True, exist_ok=True)
 	
 	# Save CSV
-	comparison_csv = results_dir / 'voting_vs_critic_comparison_now_or_2.csv'
+	comparison_csv = results_dir / 'critic_new_results_comparison.csv'
 	comparison_df.to_csv(comparison_csv, index=False)
 	print(f"  ✓ Saved comparison data to {comparison_csv}")
 	
@@ -871,7 +871,7 @@ def main():
 	
 	# Save detailed text report
 	print("\nSTEP 8: Saving detailed report...")
-	comparison_txt = results_dir / 'voting_vs_critic_comparison_report_now_or_2.txt'
+	comparison_txt = results_dir / 'critic_new_results_report.txt'
 	save_comparison_report(comparison_df, timing_results, summary_stats, output_path=comparison_txt)
 	
 	# Analyze and save timing breakdown by period
@@ -880,7 +880,7 @@ def main():
 		timing_analysis = analyze_timing_by_period(comparison_df)
 		if timing_analysis:
 			print_timing_by_period(timing_analysis)
-			timing_txt = results_dir / 'timing_by_period_now_or_2.txt'
+			timing_txt = results_dir / 'critic_new_results_timing.txt'
 			save_timing_by_period(timing_analysis, output_path=timing_txt)
 	
 	print("\n" + "="*80)

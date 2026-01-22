@@ -1,0 +1,13 @@
+Metric,Value,Percentage
+Critic Recommendation,WAIT 2 DAYS,64.3%
+Immediate Predictions,336,35.7%
+Wait 2 Days Predictions,605,64.3%
+Total Test Samples,941,100.0%
+,,
+Optimal Strategy (Actual),Wait 2 days,56.1%
+Optimal: Immediate,413,43.9%
+Optimal: Wait 2 Days,528,56.1%
+,,
+Mean Confidence,0.5709,
+Immediate Confidence,0.5654,
+Wait 2 Days Confidence,0.5740,
