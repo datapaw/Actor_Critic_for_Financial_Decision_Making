@@ -2,32 +2,31 @@ import yfinance as yf
 import os
 from pathlib import Path
 
-# Create data directory if it doesn't exist
+# make sure we have a place to put the data
 data_dir = Path('data')
 data_dir.mkdir(exist_ok=True)
 
-# Download S&P 500 data (10 years, 1-day frequency)
-print("Downloading 10 years of S&P 500 data from Yahoo Finance...")
+# grab 25 years of S&P 500 data - this might take a minute
+print("Pulling S&P 500 data from Yahoo Finance... (this could take a bit)")
 sp500 = yf.download('^GSPC', period='25y', interval='1d', progress=True)
 
-# Save to CSV
 output_path = data_dir / 'sp500_data.csv'
 sp500.to_csv(output_path)
 
-print(f"Data saved to {output_path}")
-print(f"\nData shape: {sp500.shape}")
-print(f"\nFirst few rows:")
+print(f"\nGot it! Saved to {output_path}")
+print(f"Total rows: {sp500.shape[0]}, columns: {sp500.shape[1]}")
+print(f"\nHere's what the first few rows look like:")
 print(sp500.head())
 
-# Delete rows 1 and 2 from the CSV
+# cleanup - need to drop the first two rows for some reason (weird yahoo finance thing)
 import pandas as pd
 df = pd.read_csv(output_path, index_col=0)
-df = df.drop(df.index[0:2])  # Drop rows at index 0 and 1 (1st and 2nd rows)
+df = df.drop(df.index[0:2])  # dropping first 2 rows
 df.to_csv(output_path)
-print(f"\nDeleted rows 1 and 2 from CSV")
-print(f"Updated data shape: {df.shape}")
+print(f"\nCleaned up first 2 rows")
+print(f"New shape: {df.shape}")
 
-# Rename index to 'Date' if it doesn't have a name
+# make sure the index is labeled as Date
 df.index.name = 'Date'
 df.to_csv(output_path)
-print(f"Index renamed to 'Date'")
+print(f"Done! Index is now properly labeled as 'Date'")

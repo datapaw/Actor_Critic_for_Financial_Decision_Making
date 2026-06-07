@@ -1,4 +1,6 @@
-"""Add forward_return_X_1 and forward_return_X_2 columns (shifted versions) for all existing forward_return_X columns"""
+# Add shifted forward return columns for the critic model
+# basically need to see what happens if we wait 1 or 2 days before entering
+
 import pandas as pd
 from pathlib import Path
 import re
@@ -6,7 +8,7 @@ import numpy as np
 from sklearn.preprocessing import RobustScaler
 
 def calculate_rsi(data, period=14):
-	"""Calculate Relative Strength Index"""
+	# RSI calculation
 	delta = data.diff()
 	gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
 	loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
@@ -15,7 +17,7 @@ def calculate_rsi(data, period=14):
 	return rsi
 
 def calculate_macd(data, fast=12, slow=26, signal=9):
-	"""Calculate MACD"""
+	# MACD indicator
 	ema_fast = data.ewm(span=fast).mean()
 	ema_slow = data.ewm(span=slow).mean()
 	macd_line = ema_fast - ema_slow
@@ -24,7 +26,7 @@ def calculate_macd(data, fast=12, slow=26, signal=9):
 	return macd_line, signal_line, histogram
 
 def calculate_bollinger_bands(data, period=20, num_std=2):
-	"""Calculate Bollinger Bands"""
+	# bollinger bands - useful for volatility
 	sma = data.rolling(window=period).mean()
 	std = data.rolling(window=period).std()
 	upper_band = sma + (std * num_std)
@@ -34,7 +36,7 @@ def calculate_bollinger_bands(data, period=20, num_std=2):
 	return upper_band, lower_band, bb_width, bb_position
 
 def calculate_atr(high, low, close, period=14):
-	"""Calculate Average True Range"""
+	# average true range - measures volatility
 	tr1 = high - low
 	tr2 = abs(high - close.shift())
 	tr3 = abs(low - close.shift())
@@ -43,11 +45,11 @@ def calculate_atr(high, low, close, period=14):
 	return atr
 
 def calculate_momentum(data, period=10):
-	"""Calculate Momentum (Rate of Change)"""
+	# rate of change
 	momentum = data.pct_change(periods=period) * 100
 	return momentum
 
-# Load prepared dataset
+# load the prepared dataset
 data_dir = Path('data/dataset')
 prep_path = data_dir / 'sp500_prep.csv'
 

@@ -278,39 +278,66 @@ def main(csv_path: str | Path | None = None):
     df_eval = df.tail(n_eval)
     summary = compute_sums(df_eval)
 
-    print(f"Using last {n_eval} rows (tail of prep data) for evaluation")
-    print("Forward return sums where binary flag == 1")
-    print(summary.to_string(index=False))
+    # Prepare output file
+    repo_root = Path(__file__).resolve().parent
+    results_path = repo_root / "results" / "forward_return_sums_results.txt"
 
-    # Optional: evaluate returns by ensemble vote predictions
-    try:
-        votes_df = load_votes()
-        critic_timing_df = None
+    with open(results_path, "w") as f:
+        # Write summary
+        output_line = f"Using last {n_eval} rows (tail of prep data) for evaluation"
+        print(output_line)
+        f.write(output_line + "\n")
+        
+        output_line = "Forward return sums where binary flag == 1"
+        print(output_line)
+        f.write(output_line + "\n")
+        summary_str = summary.to_string(index=False)
+        print(summary_str)
+        f.write(summary_str + "\n")
+
+        # Optional: evaluate returns by ensemble vote predictions
         try:
-            critic_timing_df = load_critic_timing()
-        except FileNotFoundError:
-            print("Critic timing data not found; skipping critic timing merge")
-        
-        merged = compute_vote_returns(votes_df, df_eval)
-        
-        # Merge critic timing data if available
-        if critic_timing_df is not None:
-            critic_subset = critic_timing_df[["date", "critic_timing_label"]].copy()
-            merged = merged.merge(critic_subset, on="date", how="left")
-        
-        vote_summary = summarize_vote_returns(merged)
+            votes_df = load_votes()
+            critic_timing_df = None
+            try:
+                critic_timing_df = load_critic_timing()
+            except FileNotFoundError:
+                output_line = "Critic timing data not found; skipping critic timing merge"
+                print(output_line)
+                f.write("\n" + output_line + "\n")
+            
+            merged = compute_vote_returns(votes_df, df_eval)
+            
+            # Merge critic timing data if available
+            if critic_timing_df is not None:
+                critic_subset = critic_timing_df[["date", "critic_timing_label"]].copy()
+                merged = merged.merge(critic_subset, on="date", how="left")
+            
+            vote_summary = summarize_vote_returns(merged)
 
-        print("\nPredicted returns by ensemble_vote_pred (mapped to 60/30/15/10 days):")
-        print(vote_summary.to_string(index=False))
-        
-        # Print critic timing summary if available
-        if critic_timing_df is not None:
-            critic_summary = summarize_critic_timing_returns(merged)
-            if not critic_summary.empty:
-                print("\nPredicted returns by critic_timing_label (0=immediate, 1=wait_2_days):")
-                print(critic_summary.to_string(index=False))
-    except FileNotFoundError as e:
-        print(f"\nVote return analysis skipped: {e}")
+            output_line = "\nPredicted returns by ensemble_vote_pred (mapped to 60/30/15/10 days):"
+            print(output_line)
+            f.write(output_line + "\n")
+            vote_summary_str = vote_summary.to_string(index=False)
+            print(vote_summary_str)
+            f.write(vote_summary_str + "\n")
+            
+            # Print critic timing summary if available
+            if critic_timing_df is not None:
+                critic_summary = summarize_critic_timing_returns(merged)
+                if not critic_summary.empty:
+                    output_line = "\nPredicted returns by critic_timing_label (0=immediate, 1=wait_2_days):"
+                    print(output_line)
+                    f.write(output_line + "\n")
+                    critic_summary_str = critic_summary.to_string(index=False)
+                    print(critic_summary_str)
+                    f.write(critic_summary_str + "\n")
+        except FileNotFoundError as e:
+            output_line = f"\nVote return analysis skipped: {e}"
+            print(output_line)
+            f.write(output_line + "\n")
+    
+    print(f"\nResults saved to {results_path}")
 
 
 if __name__ == "__main__":

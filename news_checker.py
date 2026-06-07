@@ -2,40 +2,40 @@ import pandas as pd
 from datetime import datetime
 
 def reformat_csv():
-    """Sort news by date/time and convert dates to YYYY-MM-DD format"""
+    # sort news by date and clean up the date formats
     
     input_csv = 'delete/scraped_news_with_sentiment.csv'
     output_csv = 'delete/scraped_news_sorted.csv'
     
-    print("Loading CSV...")
+    print("Loading the news CSV...")
     df = pd.read_csv(input_csv)
     
-    print(f"Total articles: {len(df)}")
-    print(f"\nOriginal date format samples:")
+    print(f"\nFound {len(df)} articles")
+    print(f"\nChecking date formats (first 3):")
     print(df['date'].head(3))
     
-    # Convert dates to datetime and then to YYYY-MM-DD format
+    # dates come in different formats so need to normalize them
     def parse_date(date_str):
-        """Parse various date formats and return YYYY-MM-DD"""
+        # handles multiple date formats
         if pd.isna(date_str) or date_str == '':
             return None
         
         try:
-            # Try parsing RFC 2822 format (e.g., "Tue, 09 Dec 2025 12:26:33 GMT")
+            # RFC 2822 format (like "Tue, 09 Dec 2025 12:26:33 GMT")
             dt = pd.to_datetime(date_str, format='mixed')
             return dt.strftime('%Y-%m-%d %H:%M:%S')
         except:
             try:
-                # Try ISO format (e.g., "2025-12-09T12:02:49Z")
+                # ISO format (like "2025-12-09T12:02:49Z")
                 dt = pd.to_datetime(date_str)
                 return dt.strftime('%Y-%m-%d %H:%M:%S')
             except:
-                return date_str  # Keep original if parsing fails
+                return date_str  # just keep it if we can't parse
     
-    print("\nConverting dates...")
+    print("\nConverting all dates to standard format...")
     df['date'] = df['date'].apply(parse_date)
     
-    # Create a datetime column for sorting and filtering
+    # make a sortable datetime column
     df['datetime_sort'] = pd.to_datetime(df['date'], errors='coerce')
     
     # Sort by date (newest first)

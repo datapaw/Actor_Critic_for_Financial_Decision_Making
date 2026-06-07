@@ -1,8 +1,5 @@
-"""
-ResNet-based model for S&P 500 forward-return classification.
-Loads prepared dataset from data/dataset/sp500_prep.csv, builds 20-day input windows,
-and trains a lightweight 1D ResNet.
-"""
+# Baseline ResNet model for S&P 500 prediction
+# Uses 20-day rolling windows to predict which time horizon is best
 
 from pathlib import Path
 from typing import List, Tuple
@@ -16,18 +13,19 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.utils import plot_model
 
-# Paths and settings
+# config stuff
 DATA_PATH = Path("data/dataset/sp500_prep.csv")
-TIME_FRAME_DAYS = 20
+TIME_FRAME_DAYS = 20  # 20-day windows seem to work best
 FEATURE_COLUMNS = ["Open", "High", "Low", "Close", "Volume"]
 TARGET_COLUMN = "target_period"
-# Split ratios: 90% train, 5% val, 5% test
+
+# train/val/test splits - keeping most data for training
 TRAIN_SPLIT = 0.9
 VAL_SPLIT = 0.05
 TEST_SPLIT = 0.05
-RANDOM_STATE = 42
+RANDOM_STATE = 42  # for reproducibility
 BATCH_SIZE = 64
-EPOCHS = 50
+EPOCHS = 50  # usually converges around 30-40
 
 
 def load_dataset(
@@ -36,7 +34,7 @@ def load_dataset(
     feature_cols: List[str],
     target_col: str,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Load CSV, clean NaNs, build rolling windows, return X, y."""
+    # load data and build rolling windows
     df = pd.read_csv(csv_path, index_col=0)
 
     # Keep only needed columns to avoid leakage

@@ -1,13 +1,13 @@
 Metric,Value,Percentage
-Critic Recommendation,WAIT 2 DAYS,64.3%
-Immediate Predictions,336,35.7%
-Wait 2 Days Predictions,605,64.3%
+Critic Recommendation,Enter IMMEDIATELY,76.8%
+Immediate Predictions,723,76.8%
+Wait 2 Days Predictions,218,23.2%
 Total Test Samples,941,100.0%
 ,,
-Optimal Strategy (Actual),Wait 2 days,56.1%
-Optimal: Immediate,413,43.9%
-Optimal: Wait 2 Days,528,56.1%
+Optimal Strategy (Actual),Immediate entry,51.2%
+Optimal: Immediate,482,51.2%
+Optimal: Wait 2 Days,459,48.8%
 ,,
-Mean Confidence,0.5709,
-Immediate Confidence,0.5654,
-Wait 2 Days Confidence,0.5740,
+Mean Confidence,0.6948,
+Immediate Confidence,0.7140,
+Wait 2 Days Confidence,0.6308,

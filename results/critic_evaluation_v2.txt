@@ -4,63 +4,63 @@ CRITIC MODEL EVALUATION REPORT
 
 OVERALL METRICS
 --------------------------------------------------------------------------------
-Test Accuracy: 0.5611
+Test Accuracy: 0.4867
 
 CLASSIFICATION REPORT
 --------------------------------------------------------------------------------
               precision    recall  f1-score   support
 
-   Immediate       0.50      0.41      0.45       413
- Wait 2 Days       0.60      0.68      0.64       528
+   Immediate       0.50      0.75      0.60       482
+ Wait 2 Days       0.44      0.21      0.29       459
 
-    accuracy                           0.56       941
-   macro avg       0.55      0.54      0.54       941
-weighted avg       0.55      0.56      0.55       941
+    accuracy                           0.49       941
+   macro avg       0.47      0.48      0.44       941
+weighted avg       0.47      0.49      0.45       941
 
 CONFUSION MATRIX
 --------------------------------------------------------------------------------
 Columns: Predicted | Rows: Actual
 Classes: [Immediate, Wait 2 Days]
 
-[[168 245]
- [168 360]]
+[[361 121]
+ [362  97]]
 
 Confusion Matrix (Formatted):
                   Pred:Immed  Pred:Wait2
-Actual:Immed                168         245
-Actual:Wait2                168         360
+Actual:Immed                361         121
+Actual:Wait2                362          97
 
 PREDICTION DISTRIBUTION
 --------------------------------------------------------------------------------
-Immediate           :    336 ( 35.7%)
-Wait 2 Days         :    605 ( 64.3%)
+Immediate           :    723 ( 76.8%)
+Wait 2 Days         :    218 ( 23.2%)
 
 ACTUAL DISTRIBUTION (Test Set)
 --------------------------------------------------------------------------------
-Immediate           :    413 ( 43.9%)
-Wait 2 Days         :    528 ( 56.1%)
+Immediate           :    482 ( 51.2%)
+Wait 2 Days         :    459 ( 48.8%)
 
 CONFIDENCE ANALYSIS
 --------------------------------------------------------------------------------
-Mean prediction confidence: 0.5709
+Mean prediction confidence: 0.6948
 
 Per-Class Confidence:
-  Immediate: 0.5654
-  Wait 2 Days: 0.5740
+  Immediate: 0.7140
+  Wait 2 Days: 0.6308
 
 PER-CLASS METRICS (from Confusion Matrix)
 --------------------------------------------------------------------------------
 
 Immediate:
-  TP: 168, FP: 168, FN: 245, TN: 360
-  Precision: 0.5000
-  Recall: 0.4068
-  F1-Score: 0.4486
+  TP: 361, FP: 362, FN: 121, TN: 97
+  Precision: 0.4993
+  Recall: 0.7490
+  F1-Score: 0.5992
 
 Wait 2 Days:
-  TP: 360, FP: 245, FN: 168, TN: 168
-  Precision: 0.5950
-  Recall: 0.6818
-  F1-Score: 0.6355
+  TP: 97, FP: 121, FN: 362, TN: 361
+  Precision: 0.4450
+  Recall: 0.2113
+  F1-Score: 0.2866
 
 ================================================================================

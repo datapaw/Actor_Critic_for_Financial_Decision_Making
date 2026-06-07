@@ -1,19 +1,7 @@
-"""Agent ensemble voter with optional tool-enrichment second pass.
+# Ensemble voting with two-pass inference
+# First pass: run all 6 models and vote
+# Second pass: if confidence is low or there's a tie, add extra features and re-run
 
-Two-pass inference:
-1. FIRST PASS: Run 6 models on original test data → voting + reasoning
-2. CONFIDENCE CHECK:
-   - If confident AND no tie → use first pass results (done)
-   - If not confident OR tie present → enrich with tools, re-run models, new voting
-
-Models loaded from `models/`:
-- mlp_wide_best.keras, wide_deep_best.keras, resnet_mlp_best.keras
-- mlp_small_best.keras, se_mlp_best.keras, stacked_gru_ln_best.keras
-
-Data: sp500_features_prices_merged.csv + optional tool features from tools.py
-Voting: majority vote with confidence-based tie-breaking.
-Output: results/ensemble_voting_results.txt + ensemble_predictions.csv
-"""
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -22,29 +10,30 @@ from sklearn.metrics import accuracy_score, precision_recall_fscore_support, con
 from sklearn.preprocessing import StandardScaler
 from datetime import datetime
 
-# TensorFlow / Keras
 import warnings
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 
+# tensorflow stuff
 try:
 	import tensorflow as tf
 	from tensorflow import keras
-	print(f"TensorFlow {tf.__version__} loaded successfully")
+	print(f"Loaded TensorFlow {tf.__version__}")
 except ImportError as e:
-	print(f"Failed to import TensorFlow: {e}")
+	print(f"TensorFlow import failed: {e}")
 	tf = None
 	keras = None
 except Exception as e:
-	print(f"Unexpected error importing TensorFlow: {type(e).__name__}: {e}")
+	print(f"Weird TensorFlow error: {type(e).__name__}: {e}")
 	tf = None
 	keras = None
 
-# tools integration
+# try to get the tools module for feature engineering
 try:
 	from tools import create_default_features
 except Exception:
 	create_default_features = None
+	# not a big deal if this fails
 
 
 def _require_tf():

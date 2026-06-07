@@ -1,15 +1,13 @@
-"""
-Data loader for the agent: load features+prices and prepare inputs/targets.
-This reads `data/dataset/sp500_features_prices_merged.csv` and returns
-X (all columns except Date and target_period) and y (target_period).
-"""
+# Main data loader for the ensemble models
+# Reads the merged dataset and prepares everything for training
+
 from pathlib import Path
 import pandas as pd
 import numpy as np
 from sklearn.metrics import confusion_matrix, classification_report
 
 
-# Deep learning imports (lazy import to give clear error if missing)
+# import tensorflow stuff - might fail if not installed
 try:
 	import tensorflow as tf
 	from tensorflow import keras
@@ -18,15 +16,16 @@ except Exception:
 	tf = None
 	keras = None
 	layers = None
+	# note: will throw error later if someone tries to use models
 
 
 def _require_tf():
 	if tf is None:
-		raise ImportError('TensorFlow is required to build models. Install with `pip install tensorflow`.')
+		raise ImportError('TensorFlow not found - install with: pip install tensorflow')
 
 
 def split_train_val_test(X, y, val_size=0.15, test_size=0.15, random_seed=42):
-	"""Split data into train/val/test chronologically."""
+	# split chronologically - can't shuffle time series data!
 	n = len(X)
 	test_idx = int(n * (1 - test_size))
 	val_idx = int(test_idx * (1 - val_size))

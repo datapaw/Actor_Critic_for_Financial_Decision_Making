@@ -1,12 +1,13 @@
-"""
-Merge selected features from sp500_tools_enriched with price columns from sp500_prep.
-Output saved to `data/dataset/sp500_features_prices_merged.csv`.
-"""
+# Merge the enriched features with price data
+# combines sp500_tools_enriched and sp500_prep into one master file
+
 import os
 from pathlib import Path
 import pandas as pd
 
 
+# features we actually want to use for training
+# TODO: might want to experiment with different feature combos
 DEFAULT_FEATURES = [
 	'feature_rsi_14','feature_rsi_7','feature_macd','feature_macd_signal','feature_macd_histogram',
 	'feature_stoch_k','feature_stoch_d','feature_roc_12','feature_roc_5','feature_ema_5','feature_ema_12',
@@ -23,10 +24,11 @@ DEFAULT_FEATURES = [
 
 
 def _detect_date_col(df: pd.DataFrame):
+	# figure out which column is the date
 	for cand in ('Date', 'date', 'date_only', 'datetime'):
 		if cand in df.columns:
 			return cand
-	# fallback: try case-insensitive
+	# try case-insensitive search
 	for c in df.columns:
 		if c.lower() in ('date', 'date_only', 'datetime'):
 			return c
@@ -37,7 +39,7 @@ def load_csv_with_date(path: Path) -> pd.DataFrame:
 	df = pd.read_csv(path)
 	date_col = _detect_date_col(df)
 	if date_col is None:
-		raise ValueError(f"No date column found in {path}")
+		raise ValueError(f"Can't find date column in {path}")
 	df[date_col] = pd.to_datetime(df[date_col])
 	# normalize to date (no time) for safe merging
 	df['Date'] = df[date_col].dt.date

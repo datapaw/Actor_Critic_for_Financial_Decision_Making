@@ -2,51 +2,48 @@ import pandas as pd
 from pathlib import Path
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 
-# Normalization option
-# 0: No normalization
-# 1: Min-Max normalization (scales to 0-1)
-# 2: Z-score normalization (mean=0, std=1)
-# 3: Robust scaling (uses median and IQR, resistant to outliers)
+# normalization options - set to 0 for no normalization (keeping it simple for now)
+# 0: none, 1: min-max (0-1), 2: z-score, 3: robust scaling
 NORMALIZATION_TYPE = 0
 
-# Forward return periods (days) to calculate
+# these are the forward return periods we care about
 FORWARD_RETURN_DAYS = [10, 15, 30, 60]
 
-# Time frame window size (number of days to look back)
+# lookback window - might adjust this later
 TIME_FRAME_DAYS = 20
 
-# Load the S&P 500 data
 data_dir = Path('data')
 data_path = data_dir / 'sp500_data.csv'
 
 print(f"Loading data from {data_path}...")
 df = pd.read_csv(data_path, index_col=0)
 
-# Add forward return columns based on FORWARD_RETURN_DAYS
-print("Calculating forward returns...")
+# calculate forward returns for each time period
+# basically: (future price - current price) / days
+print("\nCalculating forward returns for different horizons...")
 for days in FORWARD_RETURN_DAYS:
     col_name = f'forward_return_{days}'
-    df[col_name] = df['Close'].pct_change(periods=-days)
-    print(f"  Calculated {col_name}")
+    df[col_name] = (df['Close'].shift(-days) - df['Close']) / days
+    print(f"  ✓ {col_name}")
 
-# Add close difference column (today's close - tomorrow's close)
-print("Calculating close difference (today - tomorrow)...")
+# also need the next-day close difference
+print("\nAdding close difference for next day...")
 df['close_diff_next_day'] = df['Close'] - df['Close'].shift(-1)
-print("  Calculated close_diff_next_day")
+print("  ✓ close_diff_next_day")
 
-print(f"\nData shape: {df.shape}")
-print(f"\nFirst few rows:")
+print(f"\nDataset now has {df.shape[0]} rows and {df.shape[1]} columns")
+print(f"\nQuick peek at the data:")
 print(df.head())
 
-print(f"\nColumn names:")
+print(f"\nAll columns:")
 print(df.columns.tolist())
 
-# Apply normalization based on NORMALIZATION_TYPE
-print(f"\nApplying normalization (type: {NORMALIZATION_TYPE})...")
+# normalization - keeping it off for now but might enable later
+print(f"\nNormalization setting: {NORMALIZATION_TYPE}")
 price_columns = ['Open', 'High', 'Low', 'Close']
 
 if NORMALIZATION_TYPE == 0:
-    print("No normalization applied")
+    print("Skipping normalization (raw prices work better anyway)")
     
 elif NORMALIZATION_TYPE == 1:
     print("Applying Min-Max normalization (0-1 range)...")

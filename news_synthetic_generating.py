@@ -1,36 +1,29 @@
-"""
-Statistical Sentiment Synthesis
-
-Analyzes real news sentiment distribution (Dec 2025 - Jan 2026) and generates
-synthetic news for all historical dates (2001-2025) based on:
-- Sentiment statistics from real news sample
-- Correlation between sentiment and price volatility
-- News frequency patterns
-
-Outputs: data/dataset/news_sp500_synthetic_full.csv with synthetic flag
-"""
+# Synthetic news generator
+# We only have real news for Dec 2025 - Jan 2026, so we need to generate
+# synthetic news for the rest of the historical period (2001-2025)
+# Uses statistical patterns from real news + correlations with price volatility
 
 from pathlib import Path
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 
-# Configuration
+# file paths
 REAL_NEWS_PATH = Path('delete/scraped_news_sorted.csv')
 PRICES_PATH = Path('data/dataset/sp500_prep.csv')
 OUTPUT_PATH = Path('data/dataset/news_sp500_synthetic_full.csv')
 
 
 def analyze_real_news(news_path):
-    """Extract sentiment statistics from real news data."""
+    # pull stats from the real news we have
     df = pd.read_csv(news_path)
     
     print("="*70)
-    print("ANALYZING REAL NEWS DISTRIBUTION")
+    print("ANALYZING REAL NEWS DATA")
     print("="*70)
-    print(f"Total news articles: {len(df)}")
+    print(f"Total articles: {len(df)}")
     
-    # Extract stats
+    # get sentiment statistics
     stats = {
         'mean_positive': df['positive_score'].mean(),
         'std_positive': df['positive_score'].std(),
@@ -42,7 +35,7 @@ def analyze_real_news(news_path):
         'std_overall': (df['positive_score'] - df['negative_score']).std(),
     }
     
-    # Aggregate by date to get news frequency
+    # check how many articles per day on average
     df['date_only'] = pd.to_datetime(df['date']).dt.normalize()
     daily_counts = df.groupby('date_only').size()
     

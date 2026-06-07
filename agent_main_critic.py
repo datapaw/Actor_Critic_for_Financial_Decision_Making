@@ -1,18 +1,9 @@
-"""
-Critic Agent for Trading Decision Timing
-
-This critic takes ensemble voting outputs from agent_main_loop.py and original
-market features to make a refined decision: should we enter the position
-immediately (day 0), wait 1 day, or wait 2 days?
-
-The critic analyzes:
-1. Ensemble voting results (predictions, confidence, entropy, agreements)
-2. Market conditions (price, volume, volatility features)
-3. Forward return patterns (_1 and _2 shifted columns)
-4. Strategy strength metrics (confidence, margins)
-
-Output: timing_decision in {0, 1} representing immediate or wait 2 days before entering
-"""
+# Critic Agent - figures out optimal entry timing
+# Takes the ensemble's prediction and decides: enter now, wait 1 day, or wait 2 days?
+# Looks at:
+# - ensemble confidence/agreement
+# - current market conditions
+# - what happens if we wait (using shifted forward returns)
 
 from pathlib import Path
 import numpy as np
@@ -23,7 +14,7 @@ import warnings
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 
-# TensorFlow / Keras
+# tensorflow imports
 try:
 	import tensorflow as tf
 	from tensorflow import keras

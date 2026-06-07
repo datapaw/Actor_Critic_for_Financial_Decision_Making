@@ -1,0 +1,19 @@
+Using last 941 rows (tail of prep data) for evaluation
+Forward return sums where binary flag == 1
+ horizon  count_flag_1  total_return_flag_1  mean_return_flag_1  positive_count  positive_sum  negative_count  negative_sum
+      10           338          4948.177710           14.639579             330   4994.823706               8    -46.645996
+      15           201          2254.676188           11.217294             195   2265.164860               6    -10.488672
+      30           178          1004.753654            5.644683             148   1084.292684              30    -79.539030
+      60           214           472.913757            2.209877             154    674.453935              60   -201.540177
+
+Predicted returns by ensemble_vote_pred (mapped to 60/30/15/10 days):
+ class  horizon_days  count  sum_return  mean_return  win_rate_pct  positive_count  positive_sum  negative_count  negative_sum
+     0            10    619 2424.122241     3.954522     65.105008             403   5213.962769             210  -2789.840527
+     1            15     47  236.217383     5.025902     85.106383              40    305.779362               7    -69.561979
+     2            30      1    0.984334     0.984334    100.000000               1      0.984334               0      0.000000
+     3            60    274  916.375814     3.511018     83.211679             228   1041.809469              33   -125.433655
+
+Predicted returns by critic_timing_label (0=immediate, 1=wait_2_days):
+ critic_timing_label  count  sum_return  mean_return  win_rate_pct  positive_count  positive_sum  negative_count  negative_sum
+                   0    723 2734.283492     3.883925     70.539419             510   5011.613200             194  -2277.329708
+                   1    218  361.642049     4.357133     27.522936              60    632.702641              23   -271.060592

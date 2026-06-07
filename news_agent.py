@@ -4,59 +4,60 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Dict
 import warnings
-warnings.filterwarnings('ignore')
+warnings.filterwarnings('ignore')  # too many annoying warnings
 import requests
 from bs4 import BeautifulSoup
 import time
 
-# Try to import FinBERT for sentiment analysis
+# check if we have FinBERT available
 try:
     from transformers import AutoTokenizer, AutoModelForSequenceClassification
     import torch
     FINBERT_AVAILABLE = True
 except ImportError:
-    print("Warning: transformers not installed. Install with: pip install transformers torch")
+    print("Heads up: transformers not installed. You'll need it for sentiment analysis.")
+    print("Install with: pip install transformers torch")
     FINBERT_AVAILABLE = False
 
-# Try to import OpenAI for summary generation
+# check for OpenAI (optional - for summaries)
 try:
     from openai import OpenAI
     import config
     OPENAI_AVAILABLE = True
 except ImportError:
-    print("Warning: openai not installed. Install with: pip install openai")
+    print("Note: openai package not found (that's fine if you don't need summaries)")
     OPENAI_AVAILABLE = False
 
 
 class FinancialNewsWebScraper:
-    """Scrape financial news from multiple sources"""
+    # scrapes news from various financial sites
     
     def __init__(self, start_date: str = None, end_date: str = None):
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
-        # Date range for filtering (format: YYYY-MM-DD)
+        # date filtering
         self.start_date = pd.to_datetime(start_date) if start_date else None
         self.end_date = pd.to_datetime(end_date) if end_date else None
         
-        # Initialize FinBERT for sentiment analysis
+        # setup FinBERT for sentiment if available
         self.finbert_available = FINBERT_AVAILABLE
         if self.finbert_available:
-            print("Loading FinBERT model for sentiment analysis...")
+            print("Loading FinBERT... (this takes a sec)")
             self.tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
             self.model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
             self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
             self.model.to(self.device)
             self.model.eval()
-            print(f"FinBERT loaded on {self.device}")
+            print(f"FinBERT ready on {self.device}")
         else:
-            print("FinBERT not available - sentiment analysis will be skipped")
+            print("Skipping sentiment analysis (FinBERT not available)")
         
-        # Initialize OpenAI for summary generation
+        # setup OpenAI if we have the key
         self.openai_available = OPENAI_AVAILABLE
         if self.openai_available and hasattr(config, 'OPENAI_API_KEY'):
             self.openai_client = OpenAI(api_key=config.OPENAI_API_KEY)
-            print("OpenAI client initialized for summary generation")
+            print("OpenAI client ready for summaries")
         else:
             self.openai_available = False
             print("OpenAI not available - summaries will not be generated")
